@@ -52,6 +52,8 @@
                     let frame = parseInt(decoded.slice(4,6), 16)
                     let total = parseInt(decoded.slice(6,8), 16)
                     
+                    document.getElementById('qr-last').innerHTML = 'Just scanned frame #' + frame
+
                     frames[frame] = decoded.slice(8)
                     if (Object.keys(frames).length >= total)
                     {
@@ -70,16 +72,27 @@
                             a[i] = binstr.charCodeAt(i)
 
                         let brotli = new Brotli()
-                        full_payload = brotli.decompressArray(a)
-
-                        resultContainer.innerHTML = '<div class="output">' + full_payload + '</div>'
+                        let decomp = brotli.decompressArray(a)
+            
+                        out = ""
+                        for (let i = 0; i < decomp.length; ++i)
+                            out += String.fromCharCode(decomp[i])
+                        
+                        resultContainer.innerHTML = '<div class="output">' + out + '</div>'
                     } 
                     else
+                    {
+                        needed = []
+                        for (let i = 1; i <= total; ++i)
+                            if (!(i in frame))
+                                needed.push(i)
+                                
                         resultContainer.innerHTML = 
                         '<div class="output">' + 
                             Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
-                            (total - Object.keys(frames).length) + ' more. So far: <br />' +
-                            JSON.stringify(Object.keys(frames)).replace('"', '') + '</div>';
+                            (total - Object.keys(frames).length) + ' more. Still needed: <br />' +
+                            JSON.stringify(needed).replace('"', '') + '</div>';
+                    }
 
                 }
             }
@@ -93,6 +106,7 @@
 </head>
 <body>
     <div id="qr-reader" style="width:500px"></div>
+    <div id="qr-last"></div>
     <div id="qr-reader-results"></div>
 </body>
 </html>
