@@ -49,49 +49,56 @@
                     return;
                 if (decoded.slice(0,4) == 'XPOP')
                 {
-                    let frame = parseInt(decoded.slice(4,6), 16)
-                    let total = parseInt(decoded.slice(6,8), 16)
-                    
-                    document.getElementById('qr-last').innerHTML = 'Just scanned frame #' + frame;
 
-                    frames[frame] = decoded.slice(8);
-                    if (Object.keys(frames).length >= total)
+                    try
                     {
-                        done = true
-                        let full_payload = "<~"
-                        for (let i = 1; i <= total; ++i)
-                            full_payload += frames[i]
-
-                        full_payload += "~>"
-
-                        let binstr = decode_ascii85(full_payload)
-
-                        let a = new Uint8Array(binstr.length)
-
-                        for (let i = 0; i < binstr.length; ++i)
-                            a[i] = binstr.charCodeAt(i)
-
-                        let brotli = new Brotli()
-                        let decomp = brotli.decompressArray(a)
-            
-                        out = ""
-                        for (let i = 0; i < decomp.length; ++i)
-                            out += String.fromCharCode(decomp[i])
+                        let frame = parseInt(decoded.slice(4,6), 16)
+                        let total = parseInt(decoded.slice(6,8), 16)
                         
-                        resultContainer.innerHTML = '<div class="output">' + out + '</div>'
-                    } 
-                    else
+                        document.getElementById('qr-last').innerHTML = 'Just scanned frame #' + frame;
+
+                        frames[frame] = decoded.slice(8);
+                        if (Object.keys(frames).length >= total)
+                        {
+                            done = true
+                            let full_payload = "<~"
+                            for (let i = 1; i <= total; ++i)
+                                full_payload += frames[i]
+
+                            full_payload += "~>"
+
+                            let binstr = decode_ascii85(full_payload)
+
+                            let a = new Uint8Array(binstr.length)
+
+                            for (let i = 0; i < binstr.length; ++i)
+                                a[i] = binstr.charCodeAt(i)
+
+                            let brotli = new Brotli()
+                            let decomp = brotli.decompressArray(a)
+                
+                            out = ""
+                            for (let i = 0; i < decomp.length; ++i)
+                                out += String.fromCharCode(decomp[i])
+                            
+                            resultContainer.innerHTML = '<div class="output">' + out + '</div>'
+                        } 
+                        else
+                        {
+                                needed = [];
+                                for (let i = 1; i <= total; ++i)
+                                    if (!(i in frames))
+                                        needed.push(i);
+                                        
+                                resultContainer.innerHTML = 
+                                '<div class="output">' + 
+                                    Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
+                                    (total - Object.keys(frames).length) + ' more. Still needed: <br />' +
+                                    JSON.stringify(needed).replace('"', '') + '</div>';
+                        }
+                    catch (e) 
                     {
-                        needed = [];
-                        for (let i = 1; i <= total; ++i)
-                            if (!(i in frame))
-                                needed.push(i);
-                                
-                        resultContainer.innerHTML = 
-                        '<div class="output">' + 
-                            Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
-                            (total - Object.keys(frames).length) + ' more. Still needed: <br />' +
-                            JSON.stringify(needed).replace('"', '') + '</div>';
+                        console.log(e)
                     }
 
                 }
