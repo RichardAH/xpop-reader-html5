@@ -52,9 +52,9 @@
                     let frame = parseInt(decoded.slice(4,6), 16)
                     let total = parseInt(decoded.slice(6,8), 16)
                     
-                    document.getElementById('qr-last').innerHTML = 'Just scanned frame #' + frame
+                    document.getElementById('qr-last').innerHTML = 'Just scanned frame #' + frame;
 
-                    frames[frame] = decoded.slice(8)
+                    frames[frame] = decoded.slice(8);
                     if (Object.keys(frames).length >= total)
                     {
                         done = true
@@ -82,10 +82,10 @@
                     } 
                     else
                     {
-                        needed = []
+                        needed = [];
                         for (let i = 1; i <= total; ++i)
                             if (!(i in frame))
-                                needed.push(i)
+                                needed.push(i);
                                 
                         resultContainer.innerHTML = 
                         '<div class="output">' + 
