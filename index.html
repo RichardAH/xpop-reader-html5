@@ -79,7 +79,7 @@
                         '<div class="output">' + 
                             Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
                             (total - Object.keys(frames).length) + ' more. So far: <br />' +
-                            JSON.stringify(Object.keys(frames)) + '</div>';
+                            JSON.stringify(Object.keys(frames)).replace('"', '') + '</div>';
 
                 }
             }
