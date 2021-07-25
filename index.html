@@ -1,8 +1,27 @@
 <html>
 <head>
     <title>Html-Qrcode Demo</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.0.3/html5-qrcode.min.js" integrity="sha512-uOj9C1++KO/GY58nW0CjDiUjLKWQG4yB/NJMj3PtJNmFA52Hg56lojRtvBpLgQyVByUD+1M3M/1tKdoGDKUBAQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script>
+<style>
+.output {
+    max-width: 100%;
+    line-break: anywhere;
+}
+</style>
+<script src="html5-qrcode.min.js"></script>
+<script src="brotli.js"></script>
+<script defer>
+
+    function decode_ascii85(a) { //https://stackoverflow.com/a/31741111
+      var c, d, e, f, g, h = String, l = "length", w = 255, x = "charCodeAt", y = "slice", z = "replace";
+      for ("<~" === a[y](0, 2) && "~>" === a[y](-2), a = a[y](2, -2)[z](/\s/g, "")[z]("z", "!!!!!"), 
+      c = "uuuuu"[y](a[l] % 5 || 5), a += c, e = [], f = 0, g = a[l]; g > f; f += 5) d = 52200625 * (a[x](f) - 33) + 614125 * (a[x](f + 1) - 33) + 7225 * (a[x](f + 2) - 33) + 85 * (a[x](f + 3) - 33) + (a[x](f + 4) - 33), 
+      e.push(w & d >> 24, w & d >> 16, w & d >> 8, w & d);
+      return function(a, b) {
+        for (var c = b; c > 0; c--) a.pop();
+      }(e, c[l]), h.fromCharCode.apply(h, e);
+    }
+
+
     function docReady(fn) {
         // see if DOM is already available
         if (document.readyState === "complete"
@@ -37,15 +56,28 @@
                     if (Object.keys(frames).length >= total)
                     {
                         done = true
-                        let full_payload = ""
+                        let full_payload = "<~"
                         for (let i = 1; i <= total; ++i)
                             full_payload += frames[i]
 
-                        resultContainer.innerHTML += '<div>' + full_payload + '</div>'
+                        full_payload += "~>"
+
+                        let binstr = decode_ascii85(full_payload)
+
+                        let a = new Uint8Array(binstr.length)
+
+                        for (let i = 0; i < binstr.length; ++i)
+                            a[i] = binstr.charCodeAt(i)
+
+                        let brotli = new Brotli()
+                        full_payload = brotli.decompressArray(a)
+
+                        resultContainer.innerHTML = '<div class="output">' + full_payload + '</div>'
                     } 
                     else
                         resultContainer.innerHTML = 
-                        '<div>' + Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
+                        '<div class="output">' + 
+                            Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
                             (total - Object.keys(frames).length) + ' more. So far: <br />' +
                             JSON.stringify(Object.keys(frames)) + '</div>';
 
