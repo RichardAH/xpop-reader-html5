@@ -57,6 +57,9 @@
                         
                         document.getElementById('qr-last').innerHTML = 'Just scanned frame #' + frame;
 
+                        if (frame in frames)
+                            return;
+
                         frames[frame] = decoded.slice(8);
                         if (Object.keys(frames).length >= total)
                         {
