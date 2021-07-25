@@ -19,7 +19,7 @@
         var resultContainer = document.getElementById('qr-reader-results');
         var lastResult, countResults = 0;
         function onScanSuccess(decoded, decodedResult) {
-            if (decodedText !== lastResult) {
+            if (decoded !== lastResult) {
                 ++countResults;
                 lastResult = decoded;
                 // Handle on success condition with the decoded message.
