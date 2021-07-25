@@ -14,19 +14,20 @@
         }
     }
 
-    let frames = {}
-    let done = false;
     docReady(function () {
         var resultContainer = document.getElementById('qr-reader-results');
         var lastResult, countResults = 0;
+        let frames = {}
+        let done = false
         function onScanSuccess(decoded, decodedResult) {
-            if (done)
-                return;
             if (decoded !== lastResult) {
                 ++countResults;
                 lastResult = decoded;
                 // Handle on success condition with the decoded message.
+                
                 console.log(`Scan result ${decoded}`, decodedResult);
+                if (done)
+                    return;
                 if (decoded.slice(0,4) == 'XPOP')
                 {
                     let frame = parseInt(decoded.slice(4,6), 16)
@@ -35,17 +36,18 @@
                     frames[frame] = decoded.slice(8)
                     if (Object.keys(frames).length >= total)
                     {
+                        done = true
                         let full_payload = ""
                         for (let i = 1; i <= total; ++i)
                             full_payload += frames[i]
 
-                        resultContainer.innerHTML += '<pre>' + full_payload + '</pre>'
-                        done = true;
+                        resultContainer.innerHTML += '<div>' + full_payload + '</div>'
                     } 
                     else
                         resultContainer.innerHTML = 
-                        '<pre>' + Math.floor((Object.keys(frames).length / total)*100) + '% - ' + 
-                        JSON.stringify(Object.keys(frames)) + '</pre>'
+                        '<div>' + Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
+                            (total - Object.keys(frames).length) + ' more. So far: <br />' +
+                            JSON.stringify(Object.keys(frames)) + '</div>';
 
                 }
             }
