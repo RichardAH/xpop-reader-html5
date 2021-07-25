@@ -29,7 +29,6 @@
                     let frame = parseInt(decoded.slice(4,6), 16)
                     let total = parseInt(decoded.slice(6,8), 16)
                     
-                    resultContainer.innerHTML += '<div>' + frame + '/' + total + '</div>'
                     frames[frame] = decoded.slice(8)
                     if (Object.keys(frames).length >= total)
                     {
@@ -39,7 +38,12 @@
 
                         resultContainer.innerHTML += '<pre>' + full_payload + '</pre>'
                         frames = {}
-                    }
+                        this.clear() 
+                    } 
+                    else
+                        resultContainer.innerHTML = 
+                        '<pre>' + Math.floor((Object.keys(frames).length / total)*100) + '% - ' + 
+                        JSON.stringify(Object.keys(frames)) + '</pre>'
 
                 }
             }
