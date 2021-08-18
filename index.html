@@ -39,6 +39,26 @@
         let frames = {}
         let parity_frames = {}
 
+        // whenever we get a parity frame we will iterate to see if we can build any missing frames from it
+        function attempt_reconstructions()
+        {
+            let reconstruction_successful = false;
+            needed = [];
+            for (let i = 1; i <= total; ++i)
+                if (!(i in frames))
+                    needed.push(i);
+            
+            for (let i = 1; i <= total; ++i)
+            {
+                if (i in parity_frames)
+                {
+                    
+                }
+            }
+
+        }
+
+
         let done = false
         function onScanSuccess(decoded, decodedResult) {
             if (decoded !== lastResult) {
@@ -52,6 +72,9 @@
                 if (decoded.slice(0,4) == 'XPAR')
                 {
                     let upto = parseInt(decoded.slice(6,8), 16);
+                    
+                    document.getElementById('qr-last').innerHTML = 'Just scanned parity #' + upto;
+
                     if (upto in parity_frames)
                         return;
 
@@ -110,12 +133,16 @@
                                     if (!(i in frames))
                                         needed.push(i);
                                         
+                    
+                                parity = Object.keys(parity_frames);
+                    
                                 resultContainer.innerHTML = 
                                 '<div class="output">' + 
                                     Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
                                     (total - Object.keys(frames).length) + ' more. Still needed: <br />' +
-                                    JSON.stringify(needed).replace('"', '') + '</div>';
-                        }
+                                    JSON.stringify(needed).replace('"', '') +
+                                    '<br/><font color="blue">Parity frames:<br/>' +
+                                    JSON.stringify(parity).replace('"', '') + '</font></div>';
                     }
                     catch (e) 
                     {
