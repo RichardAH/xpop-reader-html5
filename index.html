@@ -175,54 +175,54 @@
                         console.log(e)
                     }
                     
-                    needed = [];
-                    for (let i = 1; i <= total; ++i)
-                        if (!(i in frames))
-                            needed.push(i);
-                            
-        
-                    parity = Object.keys(parity_frames);
-        
-                    resultContainer.innerHTML = 
-                    '<div class="output">' + 
-                        Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
-                        (total - Object.keys(frames).length) + ' more. Still needed: <br />' +
-                        JSON.stringify(needed).replaceAll('"', '') +
-                        '<br/><font color="blue">Parity frames:<br/>' +
-                        JSON.stringify(parity).replaceAll('"', '') + '</font>' +
-                        '<br/><font color="red">Reconstructed frames:<br />' +
-                        JSON.stringify(reconstructions).replaceAll('"', '') + '</font>' +
-                        '</div>';
-
-                    if (Object.keys(frames).length >= total)
-                    {
-                        done = true
-                        let full_payload = "<~"
-                        for (let i = 1; i <= total; ++i)
-                            full_payload += frames[i]
-
-                        full_payload += "~>"
-
-                        console.log(frames)
-                        console.log("full payload:", full_payload)
-
-                        let binstr = decode_ascii85(full_payload)
-
-                        let a = new Uint8Array(binstr.length)
-
-                        for (let i = 0; i < binstr.length; ++i)
-                            a[i] = binstr.charCodeAt(i)
-
-                        let brotli = new Brotli()
-                        let decomp = brotli.decompressArray(a)
-            
-                        out = ""
-                        for (let i = 0; i < decomp.length; ++i)
-                            out += String.fromCharCode(decomp[i])
-                        
-                        resultContainer.innerHTML = '<div class="output">' + out + '</div>'
-                    } 
                 }
+                needed = [];
+                for (let i = 1; i <= total; ++i)
+                    if (!(i in frames))
+                        needed.push(i);
+                        
+    
+                parity = Object.keys(parity_frames);
+    
+                resultContainer.innerHTML = 
+                '<div class="output">' + 
+                    Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
+                    (total - Object.keys(frames).length) + ' more. Still needed: <br />' +
+                    JSON.stringify(needed).replaceAll('"', '') +
+                    '<br/><font color="blue">Parity frames:<br/>' +
+                    JSON.stringify(parity).replaceAll('"', '') + '</font>' +
+                    '<br/><font color="red">Reconstructed frames:<br />' +
+                    JSON.stringify(reconstructions).replaceAll('"', '') + '</font>' +
+                    '</div>';
+
+                if (Object.keys(frames).length >= total)
+                {
+                    done = true
+                    let full_payload = "<~"
+                    for (let i = 1; i <= total; ++i)
+                        full_payload += frames[i]
+
+                    full_payload += "~>"
+
+                    console.log(frames)
+                    console.log("full payload:", full_payload)
+
+                    let binstr = decode_ascii85(full_payload)
+
+                    let a = new Uint8Array(binstr.length)
+
+                    for (let i = 0; i < binstr.length; ++i)
+                        a[i] = binstr.charCodeAt(i)
+
+                    let brotli = new Brotli()
+                    let decomp = brotli.decompressArray(a)
+        
+                    out = ""
+                    for (let i = 0; i < decomp.length; ++i)
+                        out += String.fromCharCode(decomp[i])
+                    
+                    resultContainer.innerHTML = '<div class="output">' + out + '</div>'
+                } 
             }
         }
 
