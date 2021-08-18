@@ -56,7 +56,7 @@
             if (p.length < 1)
                 return;
 
-            let pairs = [1, p[0]]; // first is a special case
+            let pairs = [[1, p[0]]]; // first is a special case
             for (let i = 1; i < p.length; ++i)
                 pairs.push([p[i-1], p[i]]);
 
