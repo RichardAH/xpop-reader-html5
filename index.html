@@ -195,7 +195,7 @@
                     JSON.stringify(reconstructions).replaceAll('"', '') + '</font>' +
                     '</div>';
 
-                if (Object.keys(frames).length >= total)
+                if (total > 0 && Object.keys(frames).length >= total)
                 {
                     done = true
                     let full_payload = "<~"
