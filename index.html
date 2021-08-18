@@ -114,7 +114,7 @@
 
                     frames[missing] = new_frame;
                     reconstructions.push(missing);
-                    console.log("reconstructed frame " + missing, frames[missing])
+                    console.log("reconstructed frame " + missing)
 
                 }
             }
@@ -129,7 +129,6 @@
                 lastResult = decoded;
                 // Handle on success condition with the decoded message.
                 
-                console.log(`Scan result ${decoded}`, decodedResult);
                 if (done)
                     return;
                 if (decoded.slice(0,4) == 'XPAR')
@@ -137,6 +136,7 @@
                     let upto = parseInt(decoded.slice(6,8), 16);
                     
                     document.getElementById('qr-last').innerHTML = 'Just scanned parity #' + upto;
+                    console.log("scanned parity frame " + upto);
 
                     if (upto in parity_frames)
                         return;
@@ -160,6 +160,7 @@
                         total = parseInt(decoded.slice(6,8), 16)
                         
                         document.getElementById('qr-last').innerHTML = 'Just scanned frame #' + frame;
+                        console.log("scanned normal frame " + frame);
 
                         if (frame in frames)
                             return;
