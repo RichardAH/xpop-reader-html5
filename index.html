@@ -44,68 +44,80 @@
         // whenever we get a parity frame we will iterate to see if we can build any missing frames from it
         function attempt_reconstructions()
         {
-            // it's always the case that we are attempting to reconstruct the left most needed frame using the first
-            // encompassing parity frame
 
-            let reconstruction_successful = false;
 
-            while (true)
+            // reconstruction algo:
+            // we order the current parity frames
+            // we take each pair of consequitive frames
+            // we check if any frames are missing between those two frames
+            // if exactly one frame is missing we perform a repair
+
+            let p = Object.keys(parity_frames).sort();
+            if (p.length < 1)
+                break;
+
+            let pairs = [0, p[0]]; // first is a special case
+            for (let i = 1; i < p.length; ++i)
+                pairs.push([p[i-1], p[i]]);
+
+            for (let i in pairs)
             {
-                for (let i = 1; i <= total; ++i)
-                if (!(i in frames))
+                let lower = pairs[i][0];
+                let higher = pairs[i][1];
+
+                // count missing
+                let missing_count= 0;
+                let missing = -1;
+                for (let j = lower; j <= higher; ++j)
+                if (!(j in frames))
                 {
-                    // frame `i` is needed
-                    // check if we have a parity frame that can rebuild it
-                    parity_checkpoints = Object.keys(parity_frames).sort();
-                    for (let j = 0; j < parity_checkpoints; ++j)
-                    if (parity_checkpoints[j] > i)
-                    {
-                        let point = parity_checkpoints[j]
-                        // we found a candidate parity frame, but now check if we're eligable to use it
-                        let missing = 0;
-                        for (let m = 1; m <= point; ++m)
-                            if (!(m in frames))
-                                missing++;
-
-                        if (missing == 1)
-                        {
-                            // we can reconstruct the missing frame
-                            // to reconstruct we use the additive inverse on mod 85 against the parity frame
-                            // using the frames we do have
-
-                            let p = parity_frames[point];
-                            for (let m = 1; m <= point; ++m)
-                            if (m in frames)
-                            {
-                                let f = frames[m];
-                                for (let x = 0; x < f.length; ++x)
-                                {
-                                    let inv = ((85 - (f.charCodeAt(x) - 33)) + p[x]) % 85;
-                                    p[x] = inv;
-                                }
-                            }
-
-                            let new_frame = "";
-
-                            for (let x = 0; x < p.length; ++x)
-                                new_frame = String.fromCharCode(33 + p[x]);
-
-                            delete parity_frames[point];
-
-                            frames[i] = new_frame;
-
-                            console.log("reconstructed frame " + i, frames[i])
-
-                            reconstructions.push(i);
-                            reconstruction_successful = true;
-                        }
-                    }
-                    break;
+                    missing_count++;
+                    if (missing_count > 1)
+                        break;
+                    missing = j;
                 }
 
-                if (!reconstruction_successful)
-                    return;
+                if (missing_count == 1)
+                {
+                    // reconstruct!
+                    
+                    let rec = parity_frames[higher].slice();
+
+                    if (lower > 0)
+                    {
+                        // subtract lower parity frame from higher before we start
+                        for (let x = 0; x < parity_frames[lower].length; ++x)
+                        {
+                            let inv = ((85 - parity_frames[lower]) + rec[x]) % 85;
+                            while (inv < 0) inv += 85;
+                            rec[x] = inv;
+                        }                            
+                    }
+        
+                    // now successively subtract the span's present frames
+                    for (let j = lower; j <= higher; ++j)
+                    {
+                        if (j in frames)
+                        for (let x = 0; x < frames[j].length; ++x)
+                        {
+                            let inv = ((85 - (frames[j].charCodeAt(x) - 33)) + rec[x]) % 85;
+                            while (inv < 0) inv += 85;
+                            rec[x] = inv;
+                        }                            
+                        
+                    }
+
+                    let new_frame = "";
+
+                    for (let x = 0; x < rec.length; ++x)
+                        new_frame = String.fromCharCode(33 + rec[x]);
+
+                    frames[missing] = new_frame;
+                    console.log("reconstructed frame " + missing, frames[missing])
+
+                }
             }
+
         }
 
 
