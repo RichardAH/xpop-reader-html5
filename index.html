@@ -54,7 +54,7 @@
 
             let p = Object.keys(parity_frames).sort();
             if (p.length < 1)
-                break;
+                return;
 
             let pairs = [0, p[0]]; // first is a special case
             for (let i = 1; i < p.length; ++i)
