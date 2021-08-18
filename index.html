@@ -203,6 +203,9 @@
 
                         full_payload += "~>"
 
+                        console.log(frames)
+                        console.log("full payload:", full_payload)
+
                         let binstr = decode_ascii85(full_payload)
 
                         let a = new Uint8Array(binstr.length)
