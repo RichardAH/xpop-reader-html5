@@ -56,7 +56,7 @@
             if (p.length < 1)
                 return;
 
-            let pairs = [0, p[0]]; // first is a special case
+            let pairs = [1, p[0]]; // first is a special case
             for (let i = 1; i < p.length; ++i)
                 pairs.push([p[i-1], p[i]]);
 
@@ -83,7 +83,7 @@
                     
                     let rec = parity_frames[higher].slice();
 
-                    if (lower > 0)
+                    if (lower > 1)
                     {
                         // subtract lower parity frame from higher before we start
                         for (let x = 0; x < parity_frames[lower].length; ++x)
@@ -110,9 +110,10 @@
                     let new_frame = "";
 
                     for (let x = 0; x < rec.length; ++x)
-                        new_frame = String.fromCharCode(33 + rec[x]);
+                        new_frame += String.fromCharCode(33 + rec[x]);
 
                     frames[missing] = new_frame;
+                    reconstructions.push(missing);
                     console.log("reconstructed frame " + missing, frames[missing])
 
                 }
