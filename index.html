@@ -38,24 +38,73 @@
         var lastResult, countResults = 0;
         let frames = {}
         let parity_frames = {}
+        let reconstructions = [];
 
         // whenever we get a parity frame we will iterate to see if we can build any missing frames from it
         function attempt_reconstructions()
         {
-            let reconstruction_successful = false;
-            needed = [];
-            for (let i = 1; i <= total; ++i)
-                if (!(i in frames))
-                    needed.push(i);
-            
-            for (let i = 1; i <= total; ++i)
-            {
-                if (i in parity_frames)
-                {
-                    
-                }
-            }
+            // it's always the case that we are attempting to reconstruct the left most needed frame using the first
+            // encompassing parity frame
 
+            let reconstruction_successful = false;
+
+            while (true)
+            {
+                for (let i = 1; i <= total; ++i)
+                if (!(i in frames))
+                {
+                    // frame `i` is needed
+                    // check if we have a parity frame that can rebuild it
+                    parity_checkpoints = Object.keys(parity_frames).sort();
+                    for (let j = 0; j < parity_checkpoints; ++j)
+                    if (parity_checkpoints[j] > i)
+                    {
+                        let point = parity_checkpoints[j]
+                        // we found a candidate parity frame, but now check if we're eligable to use it
+                        let missing = 0;
+                        for (let m = 1; m <= point; ++m)
+                            if (!(m in frames))
+                                missing++;
+
+                        if (missing == 1)
+                        {
+                            // we can reconstruct the missing frame
+                            // to reconstruct we use the additive inverse on mod 85 against the parity frame
+                            // using the frames we do have
+
+                            let p = parity_frames[point];
+                            for (let m = 1; m <= point; ++m)
+                            if (m in frames)
+                            {
+                                let f = frames[m];
+                                for (let x = 0; x < f.length; ++x)
+                                {
+                                    let inv = ((85 - (f.charCodeAt(x) - 33)) + p[x]) % 85;
+                                    p[x] = inv;
+                                }
+                            }
+
+                            let new_frame = "";
+
+                            for (let x = 0; x < p.length; ++x)
+                                new_frame = String.fromCharCode(33 + p[x]);
+
+                            delete parity_frames[point];
+
+                            frames[i] = new_frame;
+
+                            console.log("reconstructed frame " + i, frames[i])
+
+                            reconstructions.push(i);
+                            reconstruction_successful = true;
+                        }
+                    }
+                    break;
+                }
+
+                if (!reconstruction_successful)
+                    return;
+            }
         }
 
 
@@ -84,10 +133,11 @@
                         raw_parity[i-8] = decoded.charCodeAt(i) - 33; 
                     
                     parity_frames[upto] = raw_parity;
+                    
+                    attempt_reconstructions();
 
-                    console.log("parity " + upto, parity_frames[upto])
                 }
-                if (decoded.slice(0,4) == 'XPOP')
+                else if (decoded.slice(0,4) == 'XPOP')
                 {
 
                     try
@@ -101,55 +151,58 @@
                             return;
 
                         frames[frame] = decoded.slice(8);
-                        if (Object.keys(frames).length >= total)
-                        {
-                            done = true
-                            let full_payload = "<~"
-                            for (let i = 1; i <= total; ++i)
-                                full_payload += frames[i]
 
-                            full_payload += "~>"
+                        attempt_reconstructions();
 
-                            let binstr = decode_ascii85(full_payload)
-
-                            let a = new Uint8Array(binstr.length)
-
-                            for (let i = 0; i < binstr.length; ++i)
-                                a[i] = binstr.charCodeAt(i)
-
-                            let brotli = new Brotli()
-                            let decomp = brotli.decompressArray(a)
-                
-                            out = ""
-                            for (let i = 0; i < decomp.length; ++i)
-                                out += String.fromCharCode(decomp[i])
-                            
-                            resultContainer.innerHTML = '<div class="output">' + out + '</div>'
-                        } 
-                        else
-                        {
-                                needed = [];
-                                for (let i = 1; i <= total; ++i)
-                                    if (!(i in frames))
-                                        needed.push(i);
-                                        
-                    
-                                parity = Object.keys(parity_frames);
-                    
-                                resultContainer.innerHTML = 
-                                '<div class="output">' + 
-                                    Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
-                                    (total - Object.keys(frames).length) + ' more. Still needed: <br />' +
-                                    JSON.stringify(needed).replace('"', '') +
-                                    '<br/><font color="blue">Parity frames:<br/>' +
-                                    JSON.stringify(parity).replace('"', '') + '</font></div>';
-                        }
+                        needed = [];
+                        for (let i = 1; i <= total; ++i)
+                            if (!(i in frames))
+                                needed.push(i);
+                                
+            
+                        parity = Object.keys(parity_frames);
+            
+                        resultContainer.innerHTML = 
+                        '<div class="output">' + 
+                            Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
+                            (total - Object.keys(frames).length) + ' more. Still needed: <br />' +
+                            JSON.stringify(needed).replaceAll('"', '') +
+                            '<br/><font color="blue">Parity frames:<br/>' +
+                            JSON.stringify(parity).replaceAll('"', '') + '</font>' +
+                            '<br/><font color="red">Reconstructed frames:<br />' +
+                            JSON.stringify(reconstructions).replaceAll('"', '') + '</font>' +
+                            '</div>';
                     }
                     catch (e) 
                     {
                         console.log(e)
                     }
 
+                    if (Object.keys(frames).length >= total)
+                    {
+                        done = true
+                        let full_payload = "<~"
+                        for (let i = 1; i <= total; ++i)
+                            full_payload += frames[i]
+
+                        full_payload += "~>"
+
+                        let binstr = decode_ascii85(full_payload)
+
+                        let a = new Uint8Array(binstr.length)
+
+                        for (let i = 0; i < binstr.length; ++i)
+                            a[i] = binstr.charCodeAt(i)
+
+                        let brotli = new Brotli()
+                        let decomp = brotli.decompressArray(a)
+            
+                        out = ""
+                        for (let i = 0; i < decomp.length; ++i)
+                            out += String.fromCharCode(decomp[i])
+                        
+                        resultContainer.innerHTML = '<div class="output">' + out + '</div>'
+                    } 
                 }
             }
         }
