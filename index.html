@@ -39,6 +39,7 @@
         let frames = {}
         let parity_frames = {}
         let reconstructions = [];
+        let total = 0;
 
         // whenever we get a parity frame we will iterate to see if we can build any missing frames from it
         function attempt_reconstructions()
@@ -143,7 +144,7 @@
                     try
                     {
                         let frame = parseInt(decoded.slice(4,6), 16)
-                        let total = parseInt(decoded.slice(6,8), 16)
+                        total = parseInt(decoded.slice(6,8), 16)
                         
                         document.getElementById('qr-last').innerHTML = 'Just scanned frame #' + frame;
 
@@ -154,29 +155,30 @@
 
                         attempt_reconstructions();
 
-                        needed = [];
-                        for (let i = 1; i <= total; ++i)
-                            if (!(i in frames))
-                                needed.push(i);
-                                
-            
-                        parity = Object.keys(parity_frames);
-            
-                        resultContainer.innerHTML = 
-                        '<div class="output">' + 
-                            Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
-                            (total - Object.keys(frames).length) + ' more. Still needed: <br />' +
-                            JSON.stringify(needed).replaceAll('"', '') +
-                            '<br/><font color="blue">Parity frames:<br/>' +
-                            JSON.stringify(parity).replaceAll('"', '') + '</font>' +
-                            '<br/><font color="red">Reconstructed frames:<br />' +
-                            JSON.stringify(reconstructions).replaceAll('"', '') + '</font>' +
-                            '</div>';
                     }
                     catch (e) 
                     {
                         console.log(e)
                     }
+                    
+                    needed = [];
+                    for (let i = 1; i <= total; ++i)
+                        if (!(i in frames))
+                            needed.push(i);
+                            
+        
+                    parity = Object.keys(parity_frames);
+        
+                    resultContainer.innerHTML = 
+                    '<div class="output">' + 
+                        Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
+                        (total - Object.keys(frames).length) + ' more. Still needed: <br />' +
+                        JSON.stringify(needed).replaceAll('"', '') +
+                        '<br/><font color="blue">Parity frames:<br/>' +
+                        JSON.stringify(parity).replaceAll('"', '') + '</font>' +
+                        '<br/><font color="red">Reconstructed frames:<br />' +
+                        JSON.stringify(reconstructions).replaceAll('"', '') + '</font>' +
+                        '</div>';
 
                     if (Object.keys(frames).length >= total)
                     {
