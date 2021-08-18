@@ -37,6 +37,8 @@
         var resultContainer = document.getElementById('qr-reader-results');
         var lastResult, countResults = 0;
         let frames = {}
+        let parity_frames = {}
+
         let done = false
         function onScanSuccess(decoded, decodedResult) {
             if (decoded !== lastResult) {
@@ -49,7 +51,18 @@
                     return;
                 if (decoded.slice(0,4) == 'XPAR')
                 {
-                    console.log(decoded);
+                    let upto = parseInt(decoded.slice(6,8), 16);
+                    if (upto in parity_frames)
+                        return;
+
+                    let raw_parity = new Uint8Array(decoded.length - 8);
+                    
+                    for (let i = 8; i < decoded.length; ++i)
+                        raw_parity[i-8] = decoded.charCodeAt(i) - 33; 
+                    
+                    parity_frames[upto] = raw_parity;
+
+                    console.log("parity " + upto, parity_frames[upto])
                 }
                 if (decoded.slice(0,4) == 'XPOP')
                 {
