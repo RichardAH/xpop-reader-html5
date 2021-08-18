@@ -52,7 +52,7 @@
             // we check if any frames are missing between those two frames
             // if exactly one frame is missing we perform a repair
 
-            let p = Object.keys(parity_frames).map(Number).sort();
+            let p = Object.keys(parity_frames).map(Number);
             if (p.length < 1)
                 return;
 
