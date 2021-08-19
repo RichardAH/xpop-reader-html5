@@ -68,7 +68,7 @@
                 // count missing
                 let missing_count= 0;
                 let missing = -1;
-                for (let j = lower; j <= higher; ++j)
+                for (let j = lower; j < higher; ++j)
                 if (!(j in frames))
                 {
                     missing_count++;
@@ -81,38 +81,26 @@
                 {
                     // reconstruct!
                     
-                    let rec = parity_frames[higher].slice();
-
-                    if (lower > 1)
-                    {
-                        // subtract lower parity frame from higher before we start
-                        for (let x = 0; x < parity_frames[lower].length; ++x)
-                        {
-                            let inv = ((85 - parity_frames[lower]) + rec[x]) % 85;
-                            while (inv < 0) inv += 85;
-                            rec[x] = inv;
-                        }                            
-                    }
-        
-                    // now successively subtract the span's present frames
-                    for (let j = lower; j <= higher; ++j)
-                    {
-                        if (j in frames)
-                        for (let x = 0; x < frames[j].length; ++x)
-                        {
-                            let inv = ((85 - (frames[j].charCodeAt(x) - 33)) + rec[x]) % 85;
-                            while (inv < 0) inv += 85;
-                            rec[x] = inv;
-                        }                            
-                        
-                    }
-
-                    let new_frame = "";
-
+                    let r = ""; 
                     for (let x = 0; x < rec.length; ++x)
-                        new_frame += String.fromCharCode(33 + rec[x]);
+                    {
+                        // first subtract the lower pairty from the higher
+                        let sum = (85 - parity_frames[lower][1][x]) +  parity_frames[higher][1][x];
+            
+                        // next subtract the frames we do have
+                        for (let j = lower; j < higher; ++j)
+                        {
+                            if (j in frames)
+                                sum += (85 - frames[j].charCodeAt(x) - 33);
+                        }
 
-                    frames[missing] = new_frame;
+                        sum %= 85;
+    
+                        r += String.fromCharCode(33 + sum);
+
+                    }
+            
+                    frames[missing] = r;
                     reconstructions.push(missing);
                     console.log("reconstructed frame " + missing)
 
@@ -133,7 +121,9 @@
                     return;
                 if (decoded.slice(0,4) == 'XPAR')
                 {
+                    let from = parseInt(decoded.slice(4,6), 16);
                     let upto = parseInt(decoded.slice(6,8), 16);
+                    let flen = parseInt(decoded.slice(8, 12), 16);
                     
                     document.getElementById('qr-last').innerHTML = 'Just scanned parity #' + upto;
                     console.log("scanned parity frame " + upto);
@@ -141,12 +131,12 @@
                     if (upto in parity_frames)
                         return;
 
-                    let raw_parity = new Uint8Array(decoded.length - 8);
+                    let raw_parity = new Uint8Array(decoded.length - 12);
                     
-                    for (let i = 8; i < decoded.length; ++i)
-                        raw_parity[i-8] = decoded.charCodeAt(i) - 33; 
+                    for (let i = 12; i < decoded.length; ++i)
+                        raw_parity[i-12] = decoded.charCodeAt(i) - 33; 
                     
-                    parity_frames[upto] = raw_parity;
+                    parity_frames[upto] = [flen, raw_parity];
                     
                     attempt_reconstructions();
 
@@ -158,6 +148,7 @@
                     {
                         let frame = parseInt(decoded.slice(4,6), 16)
                         total = parseInt(decoded.slice(6,8), 16)
+                        let flen = parseInt(decoded.slice(8, 12), 16);
                         
                         document.getElementById('qr-last').innerHTML = 'Just scanned frame #' + frame;
                         console.log("scanned normal frame " + frame);
@@ -165,7 +156,7 @@
                         if (frame in frames)
                             return;
 
-                        frames[frame] = decoded.slice(8);
+                        frames[frame] = decoded.slice(12);
 
                         attempt_reconstructions();
 
