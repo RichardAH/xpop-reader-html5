@@ -33,7 +33,6 @@
         }
     }
 
-    var resultContainer = document.getElementById('qr-reader-results');
     var lastResult, countResults = 0;
     let frames = {}
     let parity_frames = {}
@@ -174,7 +173,7 @@
 
             parity = Object.keys(parity_frames).map(Number);
 
-            resultContainer.innerHTML = 
+            document.getElementById('qr-reader-results').innerHTML = 
             '<div class="output">' + 
                 Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
                 (total - Object.keys(frames).length) + ' more. Still needed: <br />' +
@@ -211,7 +210,7 @@
                 for (let i = 0; i < decomp.length; ++i)
                     out += String.fromCharCode(decomp[i])
                 
-                resultContainer.innerHTML = '<div class="output">' + out + '</div>'
+                document.getElementById('qr-reader-results').innerHTML = '<div class="output">' + out + '</div>'
             } 
         }
     }
