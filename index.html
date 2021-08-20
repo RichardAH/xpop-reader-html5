@@ -91,7 +91,8 @@
                     for (let j = lower; j < higher; ++j)
                     {
                         if (j in frames)
-                            sum += (85 - frames[j].charCodeAt(x) - 33);
+                            if (x < frames[j].length)
+                                sum += (85 - frames[j].charCodeAt(x) - 33);
                     }
 
                     sum %= 85;
