@@ -80,10 +80,12 @@
                 // reconstruct!
                 
                 let r = ""; 
-                for (let x = 0; x <  parity_frames[lower][1].length; ++x)
+                for (let x = 0; x <  parity_frames[higher][1].length; ++x)
                 {
                     // first subtract the lower pairty from the higher
-                    let sum = (85 - parity_frames[lower][1][x]) +  parity_frames[higher][1][x];
+                    let sum = parity_frames[higher][1][x];
+                    if (lower != 1)
+                        sum += (85 - parity_frames[lower][1][x]);
         
                     // next subtract the frames we do have
                     for (let j = lower; j < higher; ++j)
