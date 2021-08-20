@@ -92,10 +92,16 @@
                     {
                         if (j in frames)
                             if (x < frames[j].length)
+                            {
+                                console.log("frames[" + j + "].charCodeAt(" + x + ") - 33 = " + (frames[j].charCodeAt(x) - 33));
                                 sum += (85 - frames[j].charCodeAt(x) - 33);
+                            }
                     }
 
                     sum %= 85;
+
+                    if (sum < 0)
+                        sum += 85;
 
                     r += String.fromCharCode(33 + sum);
 
