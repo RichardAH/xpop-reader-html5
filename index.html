@@ -66,7 +66,7 @@
             // count missing
             let missing_count= 0;
             let missing = -1;
-            for (let j = lower; j < higher; ++j)
+            for (let j = lower; j <= higher; ++j)
             if (!(j in frames))
             {
                 missing_count++;
@@ -88,14 +88,11 @@
                         sum += (85 - parity_frames[lower][1][x]);
         
                     // next subtract the frames we do have
-                    for (let j = lower; j < higher; ++j)
+                    for (let j = lower; j <= higher; ++j)
                     {
                         if (j in frames)
                             if (x < frames[j].length)
-                            {
-                                console.log("frames[" + j + "].charCodeAt(" + x + ") - 33 = " + (frames[j].charCodeAt(x) - 33));
                                 sum += (85 - frames[j].charCodeAt(x) - 33);
-                            }
                     }
 
                     sum %= 85;
@@ -107,9 +104,12 @@
 
                 }
         
+                if (missing == higher)
+                    r = r.slice(0, parity_frames[higher][0]);
+
                 frames[missing] = r;
                 reconstructions.push(missing);
-                console.log("reconstructed frame " + missing)
+                console.log("reconstructed frame " + missing + ":", r)
 
             }
         }
