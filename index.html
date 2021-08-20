@@ -54,7 +54,7 @@
         if (p.length < 1)
             return;
 
-        let pairs = [[1, p[0]]]; // first is a special case
+        let pairs = [[0, p[0]]]; // first is a special case
         for (let i = 1; i < p.length; ++i)
             pairs.push([p[i-1], p[i]]);
 
@@ -67,7 +67,7 @@
             // count missing
             let missing_count= 0;
             let missing = -1;
-            for (let j = lower; j <= higher; ++j)
+            for (let j = lower+1; j <= higher; ++j)
             if (!(j in frames))
             {
                 missing_count++;
@@ -85,7 +85,7 @@
                 {
                     // first subtract the lower pairty from the higher
                     let sum = parity_frames[higher][1][x];
-                    if (lower != 1)
+                    if (lower != 0)
                         sum += (85 - parity_frames[lower][1][x]);
                     
                     // next subtract the frames we do have
