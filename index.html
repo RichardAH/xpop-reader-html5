@@ -87,7 +87,9 @@
                     let sum = parity_frames[higher][1][x];
                     if (lower != 1)
                         sum += (85 - parity_frames[lower][1][x]);
-        
+                    else
+                        lower = 2;
+
                     // next subtract the frames we do have
                     for (let j = lower; j <= higher; ++j)
                     {
@@ -97,9 +99,6 @@
                     }
 
                     sum %= 85;
-
-                    if (sum < 0)
-                        sum += 85;
 
                     r += String.fromCharCode(33 + sum);
 
