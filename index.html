@@ -58,6 +58,7 @@
         for (let i = 1; i < p.length; ++i)
             pairs.push([p[i-1], p[i]]);
 
+
         for (let i in pairs)
         {
             let lower = pairs[i][0];
@@ -92,7 +93,7 @@
                     {
                         if (j in frames)
                             if (x < frames[j].length)
-                                sum += (85 - frames[j].charCodeAt(x) - 33);
+                                sum += (85 - (frames[j].charCodeAt(x) - 33));
                     }
 
                     sum %= 85;
