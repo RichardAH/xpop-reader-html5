@@ -33,189 +33,189 @@
         }
     }
 
-    docReady(function () {
-        var resultContainer = document.getElementById('qr-reader-results');
-        var lastResult, countResults = 0;
-        let frames = {}
-        let parity_frames = {}
-        let reconstructions = [];
-        let total = 0;
+    var resultContainer = document.getElementById('qr-reader-results');
+    var lastResult, countResults = 0;
+    let frames = {}
+    let parity_frames = {}
+    let reconstructions = [];
+    let total = 0;
 
-        // whenever we get a parity frame we will iterate to see if we can build any missing frames from it
-        function attempt_reconstructions()
+    // whenever we get a parity frame we will iterate to see if we can build any missing frames from it
+    function attempt_reconstructions()
+    {
+
+
+        // reconstruction algo:
+        // we order the current parity frames
+        // we take each pair of consequitive frames
+        // we check if any frames are missing between those two frames
+        // if exactly one frame is missing we perform a repair
+
+        let p = Object.keys(parity_frames).map(Number);
+        if (p.length < 1)
+            return;
+
+        let pairs = [[1, p[0]]]; // first is a special case
+        for (let i = 1; i < p.length; ++i)
+            pairs.push([p[i-1], p[i]]);
+
+        for (let i in pairs)
         {
+            let lower = pairs[i][0];
+            let higher = pairs[i][1];
 
-
-            // reconstruction algo:
-            // we order the current parity frames
-            // we take each pair of consequitive frames
-            // we check if any frames are missing between those two frames
-            // if exactly one frame is missing we perform a repair
-
-            let p = Object.keys(parity_frames).map(Number);
-            if (p.length < 1)
-                return;
-
-            let pairs = [[1, p[0]]]; // first is a special case
-            for (let i = 1; i < p.length; ++i)
-                pairs.push([p[i-1], p[i]]);
-
-            for (let i in pairs)
+            // count missing
+            let missing_count= 0;
+            let missing = -1;
+            for (let j = lower; j < higher; ++j)
+            if (!(j in frames))
             {
-                let lower = pairs[i][0];
-                let higher = pairs[i][1];
-
-                // count missing
-                let missing_count= 0;
-                let missing = -1;
-                for (let j = lower; j < higher; ++j)
-                if (!(j in frames))
-                {
-                    missing_count++;
-                    if (missing_count > 1)
-                        break;
-                    missing = j;
-                }
-
-                if (missing_count == 1)
-                {
-                    // reconstruct!
-                    
-                    let r = ""; 
-                    for (let x = 0; x <  parity_frames[lower][1].length; ++x)
-                    {
-                        // first subtract the lower pairty from the higher
-                        let sum = (85 - parity_frames[lower][1][x]) +  parity_frames[higher][1][x];
-            
-                        // next subtract the frames we do have
-                        for (let j = lower; j < higher; ++j)
-                        {
-                            if (j in frames)
-                                sum += (85 - frames[j].charCodeAt(x) - 33);
-                        }
-
-                        sum %= 85;
-    
-                        r += String.fromCharCode(33 + sum);
-
-                    }
-            
-                    frames[missing] = r;
-                    reconstructions.push(missing);
-                    console.log("reconstructed frame " + missing)
-
-                }
+                missing_count++;
+                if (missing_count > 1)
+                    break;
+                missing = j;
             }
 
+            if (missing_count == 1)
+            {
+                // reconstruct!
+                
+                let r = ""; 
+                for (let x = 0; x <  parity_frames[lower][1].length; ++x)
+                {
+                    // first subtract the lower pairty from the higher
+                    let sum = (85 - parity_frames[lower][1][x]) +  parity_frames[higher][1][x];
+        
+                    // next subtract the frames we do have
+                    for (let j = lower; j < higher; ++j)
+                    {
+                        if (j in frames)
+                            sum += (85 - frames[j].charCodeAt(x) - 33);
+                    }
+
+                    sum %= 85;
+
+                    r += String.fromCharCode(33 + sum);
+
+                }
+        
+                frames[missing] = r;
+                reconstructions.push(missing);
+                console.log("reconstructed frame " + missing)
+
+            }
         }
 
+    }
 
-        let done = false
-        function onScanSuccess(decoded, decodedResult) {
-            if (decoded !== lastResult) {
-                ++countResults;
-                lastResult = decoded;
-                // Handle on success condition with the decoded message.
+
+    let done = false
+    function onScanSuccess(decoded, decodedResult) {
+        if (decoded !== lastResult) {
+            ++countResults;
+            lastResult = decoded;
+            // Handle on success condition with the decoded message.
+            
+            if (done)
+                return;
+            if (decoded.slice(0,4) == 'XPAR')
+            {
+                let from = parseInt(decoded.slice(4,6), 16);
+                let upto = parseInt(decoded.slice(6,8), 16);
+                let flen = parseInt(decoded.slice(8, 12), 16);
                 
-                if (done)
+                document.getElementById('qr-last').innerHTML = 'Just scanned parity #' + upto;
+                console.log("scanned parity frame " + upto);
+
+                if (upto in parity_frames)
                     return;
-                if (decoded.slice(0,4) == 'XPAR')
+
+                let raw_parity = new Uint8Array(decoded.length - 12);
+                
+                for (let i = 12; i < decoded.length; ++i)
+                    raw_parity[i-12] = decoded.charCodeAt(i) - 33; 
+                
+                parity_frames[upto] = [flen, raw_parity];
+                
+                attempt_reconstructions();
+
+            }
+            else if (decoded.slice(0,4) == 'XPOP')
+            {
+
+                try
                 {
-                    let from = parseInt(decoded.slice(4,6), 16);
-                    let upto = parseInt(decoded.slice(6,8), 16);
+                    let frame = parseInt(decoded.slice(4,6), 16)
+                    total = parseInt(decoded.slice(6,8), 16)
                     let flen = parseInt(decoded.slice(8, 12), 16);
                     
-                    document.getElementById('qr-last').innerHTML = 'Just scanned parity #' + upto;
-                    console.log("scanned parity frame " + upto);
+                    document.getElementById('qr-last').innerHTML = 'Just scanned frame #' + frame;
+                    console.log("scanned normal frame " + frame);
 
-                    if (upto in parity_frames)
+                    if (frame in frames)
                         return;
 
-                    let raw_parity = new Uint8Array(decoded.length - 12);
-                    
-                    for (let i = 12; i < decoded.length; ++i)
-                        raw_parity[i-12] = decoded.charCodeAt(i) - 33; 
-                    
-                    parity_frames[upto] = [flen, raw_parity];
-                    
+                    frames[frame] = decoded.slice(12);
+
                     attempt_reconstructions();
 
                 }
-                else if (decoded.slice(0,4) == 'XPOP')
+                catch (e) 
                 {
-
-                    try
-                    {
-                        let frame = parseInt(decoded.slice(4,6), 16)
-                        total = parseInt(decoded.slice(6,8), 16)
-                        let flen = parseInt(decoded.slice(8, 12), 16);
-                        
-                        document.getElementById('qr-last').innerHTML = 'Just scanned frame #' + frame;
-                        console.log("scanned normal frame " + frame);
-
-                        if (frame in frames)
-                            return;
-
-                        frames[frame] = decoded.slice(12);
-
-                        attempt_reconstructions();
-
-                    }
-                    catch (e) 
-                    {
-                        console.log(e)
-                    }
-                    
+                    console.log(e)
                 }
-                needed = [];
-                for (let i = 1; i <= total; ++i)
-                    if (!(i in frames))
-                        needed.push(i);
-                        
-    
-                parity = Object.keys(parity_frames).map(Number);
-    
-                resultContainer.innerHTML = 
-                '<div class="output">' + 
-                    Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
-                    (total - Object.keys(frames).length) + ' more. Still needed: <br />' +
-                    JSON.stringify(needed).replaceAll('"', '') +
-                    '<br/><font color="blue">Parity frames:<br/>' +
-                    JSON.stringify(parity).replaceAll('"', '') + '</font>' +
-                    '<br/><font color="red">Reconstructed frames:<br />' +
-                    JSON.stringify(reconstructions).replaceAll('"', '') + '</font>' +
-                    '</div>';
-
-                if (total > 0 && Object.keys(frames).length >= total)
-                {
-                    done = true
-                    let full_payload = "<~"
-                    for (let i = 1; i <= total; ++i)
-                        full_payload += frames[i]
-
-                    full_payload += "~>"
-
-                    console.log(frames)
-                    console.log("full payload:", full_payload)
-
-                    let binstr = decode_ascii85(full_payload)
-
-                    let a = new Uint8Array(binstr.length)
-
-                    for (let i = 0; i < binstr.length; ++i)
-                        a[i] = binstr.charCodeAt(i)
-
-                    let brotli = new Brotli()
-                    let decomp = brotli.decompressArray(a)
-        
-                    out = ""
-                    for (let i = 0; i < decomp.length; ++i)
-                        out += String.fromCharCode(decomp[i])
-                    
-                    resultContainer.innerHTML = '<div class="output">' + out + '</div>'
-                } 
+                
             }
+            needed = [];
+            for (let i = 1; i <= total; ++i)
+                if (!(i in frames))
+                    needed.push(i);
+                    
+
+            parity = Object.keys(parity_frames).map(Number);
+
+            resultContainer.innerHTML = 
+            '<div class="output">' + 
+                Math.floor((Object.keys(frames).length / total)*100) + '% - need ' + 
+                (total - Object.keys(frames).length) + ' more. Still needed: <br />' +
+                JSON.stringify(needed).replaceAll('"', '') +
+                '<br/><font color="blue">Parity frames:<br/>' +
+                JSON.stringify(parity).replaceAll('"', '') + '</font>' +
+                '<br/><font color="red">Reconstructed frames:<br />' +
+                JSON.stringify(reconstructions).replaceAll('"', '') + '</font>' +
+                '</div>';
+
+            if (total > 0 && Object.keys(frames).length >= total)
+            {
+                done = true
+                let full_payload = "<~"
+                for (let i = 1; i <= total; ++i)
+                    full_payload += frames[i]
+
+                full_payload += "~>"
+
+                console.log(frames)
+                console.log("full payload:", full_payload)
+
+                let binstr = decode_ascii85(full_payload)
+
+                let a = new Uint8Array(binstr.length)
+
+                for (let i = 0; i < binstr.length; ++i)
+                    a[i] = binstr.charCodeAt(i)
+
+                let brotli = new Brotli()
+                let decomp = brotli.decompressArray(a)
+    
+                out = ""
+                for (let i = 0; i < decomp.length; ++i)
+                    out += String.fromCharCode(decomp[i])
+                
+                resultContainer.innerHTML = '<div class="output">' + out + '</div>'
+            } 
         }
+    }
+    docReady(function () {
 
         var html5QrcodeScanner = new Html5QrcodeScanner(
             "qr-reader", { fps: 60, qrbox: 250 });
